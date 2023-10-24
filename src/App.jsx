@@ -1,31 +1,21 @@
 import { useState } from "react";
-
+import confetti from "canvas-confetti";
+import { Square } from "./componentes/Square.jsx";
+import { TURNOS, WINNER_COMBOS } from "./constantes.js";
+import { checkWinner, checkEndGame } from "./logic/borad.js";
+import { WinnerModal } from "./componentes/WinnerModal.jsx";
 import "./App.css";
-
-const TURNOS = {
-  X: "X",
-  O: "O",
-};
-const Square = ({ children, isSelected, updateBoard, index }) => {
-  const className = `square ${isSelected ? `is-selected` : ""}`;
-  const handleClick = () => {
-    updateBoard(index);
-  };
-
-  return (
-    <div onClick={handleClick} className={className} key={index}>
-      {children}
-    </div>
-  );
-};
 
 function App() {
   const [board, setBoard] = useState(Array(9).fill(null));
+
   const [turn, setTurn] = useState(TURNOS.X);
+
+  const [winner, setWiner] = useState(null); //null es que no hay ganar y false es que hay un empate
 
   const updateBoard = (index) => {
     //si ya tiene un x O una o
-    if (board[index]) return;
+    if (board[index] || winner) return;
     //actualizar el tablero
     const newBoard = [...board];
     newBoard[index] = turn;
@@ -33,11 +23,25 @@ function App() {
     //cambiar el turno
     const newTurn = turn == TURNOS.X ? TURNOS.O : TURNOS.X;
     setTurn(newTurn);
+    const newWinner = checkWinner(newBoard);
+    if (newWinner) {
+      setWiner(newWinner);
+      confetti(); // efecto de confeti
+    } else if (checkEndGame(newBoard)) {
+      setWiner(false);
+    }
+  };
+
+  const resetGame = () => {
+    setBoard(Array(9).fill(null));
+    setTurn(TURNOS.X);
+    setWiner(null);
   };
   return (
     <>
       <main className="board">
-        <h1>holi</h1>
+        <h1>TIK TAK</h1>
+        <button onClick={resetGame}> Reset</button>
         <section className="game">
           {board.map((_, index) => {
             return (
@@ -51,6 +55,8 @@ function App() {
           <Square isSelected={turn === TURNOS.X}>{TURNOS.X}</Square>
           <Square isSelected={turn === TURNOS.O}>{TURNOS.O}</Square>
         </section>
+
+        <WinnerModal resetGame={resetGame} winner={winner} />
       </main>
     </>
   );
